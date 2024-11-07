@@ -1,8 +1,9 @@
-import express from 'express';
+import express, { Router } from 'express';
 import path from 'path';
 
 interface Options{
     port: number
+    routes: Router
     public_path?: string
 }
 
@@ -11,11 +12,13 @@ export class Server {
     private app = express();
     private readonly port: number
     private readonly publicPath: string
+    private routes: Router;
 
     constructor(options: Options){
-        const {port, public_path = 'public'} = options
+        const {routes, port, public_path = 'public'} = options
         this.port = port
         this.publicPath = public_path
+        this.routes = routes
     }
 
     //! Metodo start()⬇️
@@ -23,6 +26,15 @@ export class Server {
 
         //* Middleware para que el servidor responda con el contenido de la carpeta public al visitar la ruta / ⬇️
         this.app.use(express.static(this.publicPath))
+
+        //* Middlewares para que el servidor "parsee" el body del request ⬇️
+        this.app.use(express.json())
+        this.app.use(express.urlencoded({extended: true}))
+
+
+        //! ROUTES ⬇️
+        this.app.use(this.routes)
+
 
         //* Middleware para que el servidor responda al visitar cualquier ruta ⬇️
         this.app.get('*', (req, res)=>{
